@@ -1,10 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Reflection;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class CoroutineController
@@ -210,57 +206,5 @@ public static class ThrowHelper
     public static void ArgumentOutOfRangeException()
     {
         throw new ArgumentOutOfRangeException();
-    }
-}
-public class EfficientHidingArray<TSource>
-{
-    private TSource[] source { get;set; }
-    private int[] readyIndices { get;set; }
-    private int readyIndicesLength { get; set; }
-    private List<int> reserveIndices { get; set; }
-    public int Length
-    {
-        get
-        {
-            return readyIndicesLength;
-        }
-    }
-    public EfficientHidingArray(TSource[] source)
-    {
-        this.source = source;
-        readyIndices = GenerateArray.Range(source.Length);
-        readyIndicesLength = readyIndices.Length;
-        reserveIndices = new List<int>(readyIndicesLength);
-    }
-
-    public TSource this[int index]
-    {
-        get
-        {
-            if ((uint)index >= (uint)readyIndices.Length)
-            {
-                ThrowHelper.ArgumentOutOfRangeException();
-            }
-            return source[readyIndices[index]];
-        }
-    } 
-    public void ReserveHideAtIndex(int index)
-    {
-        reserveIndices.Add(index);
-    }
-    public void Hide()
-    {
-        for (int i = 0; i < reserveIndices.Count; i++)
-        {
-            SwapAndHide(reserveIndices[i]);
-        }
-
-        reserveIndices.Clear();
-    }
-    private void SwapAndHide(int index)
-    {
-        (readyIndices[index], readyIndices[readyIndicesLength - 1]) 
-            = (readyIndices[readyIndicesLength - 1], readyIndices[index]);
-        readyIndicesLength--;
     }
 }

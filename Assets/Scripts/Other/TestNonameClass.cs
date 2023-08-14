@@ -1,5 +1,5 @@
-using NaughtyAttributes;
 using System.Collections;
+using NaughtyAttributes;
 using System.Collections.Generic;
 using UnityEngine;
 public class TestNonameClass : MonoBehaviour

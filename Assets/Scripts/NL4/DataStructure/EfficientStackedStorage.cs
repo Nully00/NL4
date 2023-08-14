@@ -1,13 +1,4 @@
-﻿/*!
- * NL3
- *
- * Copyright (c) 2023 Nulock
- *
- * Released under the MIT license.
- * see https://opensource.org/licenses/MIT
- */
-
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 
