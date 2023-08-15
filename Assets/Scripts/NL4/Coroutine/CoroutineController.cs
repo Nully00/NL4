@@ -1,8 +1,10 @@
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-
+/// <summary>
+/// コルーチンの制御を行うクラスです。
+/// A class for controlling coroutines.
+/// </summary>
 public class CoroutineController
 {
     public MonoBehaviour mono { get; private set; }
@@ -10,19 +12,42 @@ public class CoroutineController
 
     private EfficientStackedStorage<IEnumerator> _linkedCoroutines = new EfficientStackedStorage<IEnumerator>();
 
+    /// <summary>
+    /// MonoBehaviourを指定して新しいインスタンスを初期化します。
+    /// Initializes a new instance with the specified MonoBehaviour.
+    /// </summary>
+    /// <param name="mono">コルーチンの実行に使用するMonoBehaviour。</param>
     public CoroutineController(MonoBehaviour mono)
     {
+        if(mono == null)
+        {
+            throw new NullReferenceException("MonoBehaviour is null");
+        }
         this.mono = mono;
     }
-
+    /// <summary>
+    /// コルーチンを実行します。
+    /// Executes the coroutine.
+    /// </summary>
+    /// <param name="enumerator">実行するコルーチン。</param>
     public void Run(IEnumerator enumerator)
     {
         mono.StartCoroutine(Register(enumerator));
     }
+    /// <summary>
+    /// コルーチンを実行します。(待機可能)
+    /// Executes the coroutine.
+    /// </summary>
+    /// <param name="enumerator">実行するコルーチン。</param>
     public IEnumerator WaitRun(IEnumerator enumerator)
     {
         yield return mono.StartCoroutine(Register(enumerator));
     }
+    /// <summary>
+    /// コルーチンを実行します。(待機可能)
+    /// Executes the coroutine.
+    /// </summary>
+    /// <param name="enumerator">実行するコルーチン。</param>
     public IEnumerator WaitRun(params IEnumerator[] enumerator)
     {
         int finishCount = 0;
@@ -33,27 +58,37 @@ public class CoroutineController
 
         yield return WaitUntil(()=> finishCount == enumerator.Length);
     }
+    /// <summary>
+    /// コルーチンを実行します。
+    /// Executes the coroutine.
+    /// </summary>
+    /// <param name="enumerator">実行するコルーチン。</param>
     public void RunChild(IEnumerator enumerator)
     {
         mono.StartCoroutine(Register(enumerator));
     }
+    /// <summary>
+    /// コルーチンを実行します。(待機可能)
+    /// Executes the coroutine.
+    /// </summary>
+    /// <param name="enumerator">実行するコルーチン。</param>
     public IEnumerator WaitRunChild(IEnumerator enumerator)
     {
         yield return Register(enumerator);
     }
+    /// <summary>
+    /// コルーチンを実行します。(待機可能)
+    /// Executes the coroutine.
+    /// </summary>
+    /// <param name="enumerator">実行するコルーチン。</param>
     public IEnumerator WaitRunChild(params IEnumerator[] enumerator)
     {
         yield return WaitRun(enumerator);
     }
-
-    public IEnumerator Register(IEnumerator enumerator)
-    {
-        var id = _linkedCoroutines.Deposit(enumerator);
-        yield return enumerator;
-        _linkedCoroutines.Release(id);
-    }
-
-    
+    /// <summary>
+    /// すべてのコルーチンを停止します。
+    /// Stops all the coroutines.
+    /// </summary>
     public void Kill()
     {
         foreach (var linkCoroutine in _linkedCoroutines)
@@ -64,23 +99,43 @@ public class CoroutineController
         }
         _linkedCoroutines.AllRelease();
     }
+    /// <summary>
+    /// 内部からすべてのコルーチンを停止します。
+    /// Stops all the coroutines from inside.
+    /// </summary>
     public IEnumerator KillFromInside()
     {
         Kill();
         yield return WaitForFrame();
     }
-
+    /// <summary>
+    /// コルーチンの実行を一時停止します。
+    /// Pauses the execution of coroutines.
+    /// </summary>
     public void Pause()
     {
         isPausing = true;
     }
-
+    /// <summary>
+    /// コルーチンの実行を再開します。
+    /// Resumes the execution of coroutines.
+    /// </summary>
     public void Restart()
     {
         isPausing = false;
     }
-
-
+    /// <summary>
+    /// コルーチンを登録します。
+    /// Registers the coroutine.
+    /// </summary>
+    /// <param name="enumerator">登録するコルーチン。</param>
+    public IEnumerator Register(IEnumerator enumerator)
+    {
+        var id = _linkedCoroutines.Deposit(enumerator);
+        yield return enumerator;
+        _linkedCoroutines.Release(id);
+    }
+    #region Common
     /// <summary>
     /// フレーム待機を行います。
     /// Waits for a frame.
@@ -108,13 +163,22 @@ public class CoroutineController
             totalTime += Time.deltaTime;
         }
     }
-
-    internal IEnumerator RegisterCallBack(IEnumerator enumerator,Action action)
+    #endregion
+    #region DelayAction
+    /// 指定時間待った後、指定されたアクションを実行します。
+    /// Executes the specified action after waiting for the given duration.
+    /// </summary>
+    public void DelayAction(float seconds, Action action)
     {
-        yield return Register(enumerator);
-        action();
+        Run(DelayAction_Internal(seconds, action));
     }
-
+    internal IEnumerator DelayAction_Internal(float seconds, Action action)
+    {
+        yield return WaitForSeconds(seconds);
+        action?.Invoke();
+    }
+    #endregion
+    #region Until,While
     /// <summary>
     /// 指定した条件が満たされるまで待ちます。
     /// Waits until the specified condition is met.
@@ -140,14 +204,43 @@ public class CoroutineController
             yield return WaitForFrame();
         }
     }
-
-    public IEnumerator RunWhenTrue(params (Func<bool> condition,IEnumerator enumerator)[] conditionalCoroutines)
+    #endregion
+    #region RunWhen
+    /// <summary>
+    /// 条件が真の場合にコルーチンを実行します。
+    /// Executes coroutines when the condition is true.
+    /// </summary>
+    /// <param name="conditionalCoroutines">条件とコルーチンのペアのリスト。</param>
+    public IEnumerator WaitRunWhenTrue(params (Func<bool> condition,IEnumerator enumerator)[] conditionalCoroutines)
     {
-        yield return RunWhen_Internal(true, conditionalCoroutines);
+        yield return WaitRun(RunWhen_Internal(true, conditionalCoroutines));
     }
-    public IEnumerator RunWhenFalse(params (Func<bool> condition, IEnumerator enumerator)[] conditionalCoroutines)
+    /// <summary>
+    /// 条件が真の場合にコルーチンを実行します。
+    /// Executes coroutines when the condition is true.
+    /// </summary>
+    /// <param name="conditionalCoroutines">条件とコルーチンのペアのリスト。</param>
+    public void RunWhenTrue(params (Func<bool> condition,IEnumerator enumerator)[] conditionalCoroutines)
     {
-        yield return RunWhen_Internal(false,conditionalCoroutines);
+        Run(RunWhen_Internal(true, conditionalCoroutines));
+    }
+    /// <summary>
+    /// 条件が偽の場合にコルーチンを実行します。
+    /// Executes coroutines when the condition is false.
+    /// </summary>
+    /// <param name="conditionalCoroutines">条件とコルーチンのペアのリスト。</param>
+    public IEnumerator WaitRunWhenFalse(params (Func<bool> condition, IEnumerator enumerator)[] conditionalCoroutines)
+    {
+        yield return WaitRun(RunWhen_Internal(false,conditionalCoroutines));
+    }
+    /// <summary>
+    /// 条件が偽の場合にコルーチンを実行します。
+    /// Executes coroutines when the condition is false.
+    /// </summary>
+    /// <param name="conditionalCoroutines">条件とコルーチンのペアのリスト。</param>
+    public void RunWhenFalse(params (Func<bool> condition, IEnumerator enumerator)[] conditionalCoroutines)
+    {
+        Run(RunWhen_Internal(false,conditionalCoroutines));
     }
     internal IEnumerator RunWhen_Internal(bool flag,params (Func<bool> condition, IEnumerator enumerator)[] conditionalCoroutines)
     {
@@ -171,40 +264,71 @@ public class CoroutineController
         }
         yield return WaitUntil(() => finishCount == conditionalCoroutines.Length);
     }
-}
-
-
-public static class ListExtensions
-{
-    public static void RemoveAtEfficiently<T>(this List<T> list, int index)
+    #endregion
+    #region OverTimeAction
+    /// <summary>
+    /// 指定時間かけてアクションを実行します。
+    /// </summary>
+    public IEnumerator WaitOverTimeAction(float seconds, Action action)
     {
-        if ((uint)index >= (uint)list.Count)
+        yield return WaitRun(OverTimeAction_Internal(seconds,x => action()));
+    }
+    /// <summary>
+    /// 指定時間かけてアクションを実行します。
+    /// </summary>
+    public void OverTimeAction(float seconds, Action action)
+    {
+        WaitRun(OverTimeAction_Internal(seconds,x => action()));
+    }
+    /// <summary>
+    /// 指定時間かけてアクションを実行します。
+    /// Actionの引数に現在の経過時間が入ります。
+    /// </summary>
+    public IEnumerator WaitOverTimeAction(float seconds, Action<float> action)
+    {
+        yield return WaitRun(OverTimeAction_Internal(seconds, action));
+    }
+    /// <summary>
+    /// 指定時間かけてアクションを実行します。
+    /// Actionの引数に現在の経過時間が入ります。
+    /// </summary>
+    public void OverTimeAction(float seconds, Action<float> action)
+    {
+        WaitRun(OverTimeAction_Internal(seconds, action));
+    }
+    /// <summary>
+    /// 指定時間かけてアクションを実行します。
+    /// Actionの引数に現在の経過時間(0-1)が入ります。
+    /// </summary>
+    public IEnumerator WaitOverTimeAction01(float seconds, Action<float> action)
+    {
+        yield return WaitRun(OverTimeAction_Internal(seconds, x => action(x / seconds)));
+    }
+    /// <summary>
+    /// 指定時間かけてアクションを実行します。
+    /// Actionの引数に現在の経過時間(0-1)が入ります。
+    /// </summary>
+    public void OverTimeAction01(float seconds, Action<float> action)
+    {
+        WaitRun(OverTimeAction_Internal(seconds, x => action(x / seconds)));
+    }
+    private IEnumerator OverTimeAction_Internal(float seconds, Action<float> action)
+    {
+        float totalTime = 0;
+        action(0);
+        while (totalTime < seconds)
         {
-            ThrowHelper.ArgumentOutOfRangeException();
+            yield return WaitForFrame();
+            totalTime += UnityEngine.Time.deltaTime;
+            action(Mathf.Min(totalTime, seconds));
         }
-        int lastIdx = list.Count - 1;
-
-        (list[index], list[lastIdx]) = (list[lastIdx], list[index]);
-        list.RemoveAt(lastIdx);
     }
-}
-
-public static class GenerateArray
-{
-    public static int[] Range(int length)
+    #endregion
+    #region Other
+    internal IEnumerator RegisterCallBack(IEnumerator enumerator, Action action)
     {
-        int[] result = new int[length];
-        for (int i = 0; i < length; i++)
-        {
-            result[i] = i;
-        }
-        return result;
+        yield return Register(enumerator);
+        action();
     }
-}
-public static class ThrowHelper
-{
-    public static void ArgumentOutOfRangeException()
-    {
-        throw new ArgumentOutOfRangeException();
-    }
+    #endregion
 }

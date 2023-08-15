@@ -82,7 +82,7 @@ public class TestNonameClass : MonoBehaviour
         IEnumerator TestA()
         {
             Debug.Log("Start TestA");
-            yield return _coroutineController.RunWhenTrue(
+            yield return _coroutineController.WaitRunWhenTrue(
                 (()=> true,TestB()),
                 (()=> _flagA,TestC()));
             Debug.Log("End TestA");
