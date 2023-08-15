@@ -1,4 +1,5 @@
 using System;
+using System.Buffers;
 using System.Collections;
 using System.Linq;
 using NUnit.Framework;
@@ -25,7 +26,8 @@ public class CoroutineControllerTest
             Func<Action, IEnumerator>[] coroutines =
             {
                 RunTest,PauseTest,KillTest,KillMultipleTest,KillNoWaitTest,
-                DelayActionTest,DelayActionKillTest,RunWhenTrueTest1,RunWhenTrueTest2,OverTimeActionTest
+                DelayActionTest,DelayActionKillTest,RunWhenTrueTest1,RunWhenTrueTest2,OverTimeActionTest,
+                ThorwAndFinallyTest
             };
             bool[] finished = new bool[coroutines.Length];
 
@@ -230,6 +232,31 @@ public class CoroutineControllerTest
                 x => Assert.That(Mathf.Abs(Mathf.Min(((_time - startTime) / 1.5f), 1.0f) - x), Is.LessThan(0.05f)));
             //Debug.Log($"WaitOverTimeAction01 : {string.Join(',', result.Select(x => x.ToString()).ToArray())}");
             onComplete();
+        }
+        private IEnumerator ThorwAndFinallyTest(Action onComplete)
+        {
+            var coroutineController = new CoroutineController(this);
+            int[] array = ArrayPool<int>.Shared.Rent(10);
+            bool finallied = false;
+            bool onErrored = false;
+            try
+            {
+                yield return coroutineController.WaitRunChild(Error(array), _ => onErrored = true);
+            }
+            finally
+            {
+                ArrayPool<int>.Shared.Return(array);
+                finallied = true;
+            }
+
+            Assert.That(finallied);
+            Assert.That(onErrored);
+            onComplete();
+            IEnumerator Error(int[] array)
+            {
+                yield return new WaitForSeconds(1.0f);
+                throw new System.Exception();
+            }
         }
     }
 }

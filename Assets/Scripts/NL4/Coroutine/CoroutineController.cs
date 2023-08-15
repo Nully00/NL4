@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
+using UnityEditor.PackageManager;
 using UnityEngine;
+using UnityEngine.UI;
 /// <summary>
 /// コルーチンの制御を行うクラスです。
 /// A class for controlling coroutines.
@@ -30,18 +32,18 @@ public class CoroutineController
     /// Executes the coroutine.
     /// </summary>
     /// <param name="enumerator">実行するコルーチン。</param>
-    public void Run(IEnumerator enumerator)
+    public void Run(IEnumerator enumerator, Action<Exception> onError = null)
     {
-        mono.StartCoroutine(Register(enumerator));
+        mono.StartCoroutine(Register(enumerator,onError));
     }
     /// <summary>
     /// コルーチンを実行します。(待機可能)
     /// Executes the coroutine.
     /// </summary>
     /// <param name="enumerator">実行するコルーチン。</param>
-    public IEnumerator WaitRun(IEnumerator enumerator)
+    public IEnumerator WaitRun(IEnumerator enumerator, Action<Exception> onError = null)
     {
-        yield return mono.StartCoroutine(Register(enumerator));
+        yield return mono.StartCoroutine(Register(enumerator, onError));
     }
     /// <summary>
     /// コルーチンを実行します。(待機可能)
@@ -63,18 +65,18 @@ public class CoroutineController
     /// Executes the coroutine.
     /// </summary>
     /// <param name="enumerator">実行するコルーチン。</param>
-    public void RunChild(IEnumerator enumerator)
+    public void RunChild(IEnumerator enumerator, Action<Exception> onError = null)
     {
-        mono.StartCoroutine(Register(enumerator));
+        mono.StartCoroutine(Register(enumerator, onError));
     }
     /// <summary>
     /// コルーチンを実行します。(待機可能)
     /// Executes the coroutine.
     /// </summary>
     /// <param name="enumerator">実行するコルーチン。</param>
-    public IEnumerator WaitRunChild(IEnumerator enumerator)
+    public IEnumerator WaitRunChild(IEnumerator enumerator, Action<Exception> onError = null)
     {
-        yield return Register(enumerator);
+        yield return Register(enumerator, onError);
     }
     /// <summary>
     /// コルーチンを実行します。(待機可能)
@@ -129,11 +131,41 @@ public class CoroutineController
     /// Registers the coroutine.
     /// </summary>
     /// <param name="enumerator">登録するコルーチン。</param>
-    public IEnumerator Register(IEnumerator enumerator)
+    public IEnumerator Register(IEnumerator enumerator, Action<Exception> onError = null)
     {
-        var id = _linkedCoroutines.Deposit(enumerator);
-        yield return enumerator;
+        var coroutine = CreateErrorHandlingCoroutine(enumerator, onError);
+        var id = _linkedCoroutines.Deposit(coroutine);
+        yield return coroutine;
         _linkedCoroutines.Release(id);
+    }
+
+    private IEnumerator CreateErrorHandlingCoroutine(IEnumerator coroutine,Action<Exception> onError)
+    {
+        while (true)
+        {
+            object current = null;
+            Exception ex = null;
+            try
+            {
+                if (!coroutine.MoveNext())
+                {
+                    break;
+                }
+                current = coroutine.Current;
+            }
+            catch (Exception e)
+            {
+                ex = e;
+                onError?.Invoke(e);
+            }
+
+            if (ex != null)
+            {
+                yield return ex;
+                yield break;
+            }
+            yield return current;
+        }
     }
     #region Common
     /// <summary>
