@@ -1,6 +1,8 @@
 ﻿using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools.Utils;
+using NL4.DataStructure;
+using NL4.Extensions;
 
 namespace NL4_DataStructure
 {
