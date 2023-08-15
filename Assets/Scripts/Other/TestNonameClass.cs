@@ -3,6 +3,7 @@ using NaughtyAttributes;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Buffers;
+using NL4.Coroutine;
 
 public class TestNonameClass : MonoBehaviour
 {

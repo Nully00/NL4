@@ -6,6 +6,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.TestTools.Utils;
+using NL4.Coroutine;
 
 public class CoroutineControllerTest 
 {

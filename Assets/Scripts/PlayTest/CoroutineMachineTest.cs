@@ -4,6 +4,7 @@ using UnityEngine.TestTools;
 using UnityEngine;
 using System.Linq;
 using NUnit.Framework;
+using NL4.Coroutine;
 
 public class CoroutineMachineTest
 {
