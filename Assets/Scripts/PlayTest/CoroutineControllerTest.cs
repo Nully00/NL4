@@ -27,7 +27,7 @@ public class CoroutineControllerTest
             {
                 RunTest,PauseTest,KillTest,KillMultipleTest,KillNoWaitTest,
                 DelayActionTest,DelayActionKillTest,RunWhenTrueTest1,RunWhenTrueTest2,OverTimeActionTest,
-                ThorwAndFinallyTest
+                ThorwAndFinallyTest,CompleteTest
             };
             bool[] finished = new bool[coroutines.Length];
 
@@ -256,6 +256,20 @@ public class CoroutineControllerTest
             {
                 yield return new WaitForSeconds(1.0f);
                 throw new System.Exception();
+            }
+        }
+        private IEnumerator CompleteTest(Action onComplete)
+        {
+            var coroutineController = new CoroutineController(this);
+            bool finallied = false;
+            coroutineController.RunChild(A(), () => finallied = true);
+            yield return coroutineController.WaitForSeconds(1.5f);
+            Assert.That(finallied);
+            onComplete();
+            IEnumerator A()
+            {
+                finallied = false;
+                yield return coroutineController.WaitForSeconds(1.0f);
             }
         }
     }

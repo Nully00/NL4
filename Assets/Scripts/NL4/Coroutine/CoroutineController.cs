@@ -1,8 +1,6 @@
 using System;
 using System.Collections;
-using UnityEditor.PackageManager;
 using UnityEngine;
-using UnityEngine.UI;
 /// <summary>
 /// コルーチンの制御を行うクラスです。
 /// A class for controlling coroutines.
@@ -14,6 +12,10 @@ public class CoroutineController
 
     private EfficientStackedStorage<IEnumerator> _linkedCoroutines = new EfficientStackedStorage<IEnumerator>();
 
+    public event Action OnRun;
+    public event Action OnKill;
+    public event Action OnPause;
+    public event Action OnRestart;
     /// <summary>
     /// MonoBehaviourを指定して新しいインスタンスを初期化します。
     /// Initializes a new instance with the specified MonoBehaviour.
@@ -32,9 +34,30 @@ public class CoroutineController
     /// Executes the coroutine.
     /// </summary>
     /// <param name="enumerator">実行するコルーチン。</param>
-    public void Run(IEnumerator enumerator, Action<Exception> onError = null)
+    public void Run(IEnumerator enumerator)
     {
-        mono.StartCoroutine(Register(enumerator,onError));
+        OnRun?.Invoke();
+        mono.StartCoroutine(Register(enumerator, null, null));
+    }
+    /// <summary>
+    /// コルーチンを実行します。
+    /// Executes the coroutine.
+    /// </summary>
+    /// <param name="enumerator">実行するコルーチン。</param>
+    public void Run(IEnumerator enumerator, Action<Exception> onError, Action onComplete)
+    {
+        OnRun?.Invoke();
+        mono.StartCoroutine(Register(enumerator,onError, onComplete));
+    }
+    /// <summary>
+    /// コルーチンを実行します。
+    /// Executes the coroutine.
+    /// </summary>
+    /// <param name="enumerator">実行するコルーチン。</param>
+    public void Run(IEnumerator enumerator, Action onComplete)
+    {
+        OnRun?.Invoke();
+        mono.StartCoroutine(Register(enumerator, null, onComplete));
     }
     /// <summary>
     /// コルーチンを実行します。(待機可能)
@@ -43,6 +66,7 @@ public class CoroutineController
     /// <param name="enumerator">実行するコルーチン。</param>
     public IEnumerator WaitRun(IEnumerator enumerator, Action<Exception> onError = null)
     {
+        OnRun?.Invoke();
         yield return mono.StartCoroutine(Register(enumerator, onError));
     }
     /// <summary>
@@ -65,9 +89,30 @@ public class CoroutineController
     /// Executes the coroutine.
     /// </summary>
     /// <param name="enumerator">実行するコルーチン。</param>
-    public void RunChild(IEnumerator enumerator, Action<Exception> onError = null)
+    public void RunChild(IEnumerator enumerator)
     {
-        mono.StartCoroutine(Register(enumerator, onError));
+        OnRun?.Invoke();
+        mono.StartCoroutine(Register(enumerator, null, null));
+    }
+    /// <summary>
+    /// コルーチンを実行します。
+    /// Executes the coroutine.
+    /// </summary>
+    /// <param name="enumerator">実行するコルーチン。</param>
+    public void RunChild(IEnumerator enumerator, Action<Exception> onError, Action onComplete)
+    {
+        OnRun?.Invoke();
+        mono.StartCoroutine(Register(enumerator, onError, onComplete));
+    }
+    /// <summary>
+    /// コルーチンを実行します。
+    /// Executes the coroutine.
+    /// </summary>
+    /// <param name="enumerator">実行するコルーチン。</param>
+    public void RunChild(IEnumerator enumerator, Action onComplete)
+    {
+        OnRun?.Invoke();
+        mono.StartCoroutine(Register(enumerator, null, onComplete));
     }
     /// <summary>
     /// コルーチンを実行します。(待機可能)
@@ -76,6 +121,7 @@ public class CoroutineController
     /// <param name="enumerator">実行するコルーチン。</param>
     public IEnumerator WaitRunChild(IEnumerator enumerator, Action<Exception> onError = null)
     {
+        OnRun?.Invoke();
         yield return Register(enumerator, onError);
     }
     /// <summary>
@@ -100,6 +146,7 @@ public class CoroutineController
             temp = null;
         }
         _linkedCoroutines.AllRelease();
+        OnKill?.Invoke();
     }
     /// <summary>
     /// 内部からすべてのコルーチンを停止します。
@@ -117,6 +164,7 @@ public class CoroutineController
     public void Pause()
     {
         isPausing = true;
+        OnPause?.Invoke();
     }
     /// <summary>
     /// コルーチンの実行を再開します。
@@ -125,21 +173,22 @@ public class CoroutineController
     public void Restart()
     {
         isPausing = false;
+        OnRestart?.Invoke();
     }
     /// <summary>
     /// コルーチンを登録します。
     /// Registers the coroutine.
     /// </summary>
     /// <param name="enumerator">登録するコルーチン。</param>
-    public IEnumerator Register(IEnumerator enumerator, Action<Exception> onError = null)
+    public IEnumerator Register(IEnumerator enumerator, Action<Exception> onError = null, Action onComplete = null)
     {
-        var coroutine = CreateErrorHandlingCoroutine(enumerator, onError);
+        var coroutine = CreateErrorHandlingCoroutine(enumerator, onError, onComplete);
         var id = _linkedCoroutines.Deposit(coroutine);
         yield return coroutine;
         _linkedCoroutines.Release(id);
     }
 
-    private IEnumerator CreateErrorHandlingCoroutine(IEnumerator coroutine,Action<Exception> onError)
+    private IEnumerator CreateErrorHandlingCoroutine(IEnumerator coroutine,Action<Exception> onError,Action onComplete)
     {
         while (true)
         {
@@ -166,6 +215,7 @@ public class CoroutineController
             }
             yield return current;
         }
+        onComplete?.Invoke();
     }
     #region Common
     /// <summary>
