@@ -263,6 +263,18 @@ namespace NL4.Coroutine
             yield return WaitForSeconds(seconds);
             action?.Invoke();
         }
+        /// 指定時間待った後、指定されたコルーチンを実行します。
+        /// Executes the specified coroutine after waiting for the given duration.
+        /// </summary>
+        public IEnumerator WaitDelayCoroutine(float seconds, IEnumerator coroutine)
+        {
+            yield return WaitRun(WaitDelayCoroutine_Internal(seconds, coroutine));
+        }
+        internal IEnumerator WaitDelayCoroutine_Internal(float seconds, IEnumerator coroutine)
+        {
+            yield return WaitForSeconds(seconds);
+            yield return coroutine;
+        }
         #endregion
         #region Until,While
         /// <summary>
@@ -409,12 +421,34 @@ namespace NL4.Coroutine
                 action(Mathf.Min(totalTime, seconds));
             }
         }
+        /// <summary>
+        /// コルーチンが実行中の時Actionを常に実行します。
+        /// </summary>
+        public IEnumerator WaitOverCoroutineAction(IEnumerator coroutine, Action action)
+        {
+            bool finished = false;
+            RunChild(RegisterCallBack(coroutine, () => finished = true));
+            while (!finished)
+            {
+                action();
+                yield return WaitForFrame();
+            }
+        }
         #endregion
         #region Other
-        internal IEnumerator RegisterCallBack(IEnumerator enumerator, Action action)
+        public IEnumerator RegisterCallBack(IEnumerator enumerator, Action action)
         {
             yield return Register(enumerator);
             action();
+        }
+
+
+        public IEnumerator Append(params IEnumerator[] coroutines)
+        {
+            for (int i = 0; i < coroutines.Length; i++)
+            {
+                yield return Register(coroutines[i]);
+            }
         }
         #endregion
     }
