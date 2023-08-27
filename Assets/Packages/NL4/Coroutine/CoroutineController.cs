@@ -434,6 +434,24 @@ namespace NL4.Coroutine
                 yield return WaitForFrame();
             }
         }
+        /// <summary>
+        /// コルーチンが実行中の時Actionを常に実行します。
+        /// </summary>
+        public IEnumerator WaitOverCoroutineAction(IEnumerator coroutine, IEnumerator action)
+        {
+            bool finished = false;
+            bool finishedChild = false;
+            RunChild(RegisterCallBack(coroutine, () => finished = true));
+            while (!finished)
+            {
+                if(finishedChild)
+                {
+                    finishedChild = false;
+                    RunChild(RegisterCallBack(action, () => finishedChild = true));
+                }
+                yield return WaitForFrame();
+            }
+        }
         #endregion
         #region Other
         public IEnumerator RegisterCallBack(IEnumerator enumerator, Action action)
