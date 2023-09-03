@@ -25,8 +25,7 @@ namespace NL4.Extensions
                 ThrowHelper.ArgumentOutOfRangeException();
             }
             int lastIdx = list.Count - 1;
-
-            (list[index], list[lastIdx]) = (list[lastIdx], list[index]);
+            list[index] = list[lastIdx];
             list.RemoveAt(lastIdx);
         }
         private static Random s_rng = new Random();
