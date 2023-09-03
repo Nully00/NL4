@@ -7,18 +7,23 @@ namespace NL4.DataStructure
     public class FastRemovalList<TSource> : IEnumerable<TSource>
     {
         private List<TSource> _source;
-        private HashSet<int> _reserveIndices;
+        private List<ID> _ids;
 
         public FastRemovalList(int capacity = 0)
         {
             _source = new List<TSource>(capacity);
-            _reserveIndices = new HashSet<int>();
+            _ids = new List<ID>(capacity);
         }
 
         public FastRemovalList(List<TSource> list)
         {
             _source = new List<TSource>(list);
-            _reserveIndices = new HashSet<int>();
+            _ids = new List<ID>(list.Count);
+
+            for (int i = 0; i < list.Count; i++)
+            {
+                _ids.Add(new ID(i));
+            }
         }
 
         public TSource this[int index]
@@ -34,42 +39,47 @@ namespace NL4.DataStructure
 
         public int Count => _source.Count;
 
-        public void Add(TSource item)
+        public ID Add(TSource item)
         {
             _source.Add(item);
-        }
-
-        public void Reserve(int index)
-        {
-            if ((uint)index >= (uint)_source.Count)
-                ThrowHelper.ArgumentOutOfRangeException();
-
-            _reserveIndices.Add(index);
-        }
-
-        public void Commit()
-        {
-            var sortedIndices = _reserveIndices.OrderByDescending(i => i).ToList();
-            foreach (var index in sortedIndices)
-            {
-                SwapRemove(index);
-            }
-            _reserveIndices.Clear();
+            var id = new ID(_source.Count - 1);
+            _ids.Add(id);
+            return id;
         }
 
         public void Remove(TSource item)
         {
             int index = _source.IndexOf(item);
-            SwapRemove(index);
+            if (index != -1)
+            {
+                SwapRemove(index);
+            }
+        }
+        public void Remove(ID id)
+        {
+            SwapRemove(id.index);
         }
         public void RemoveAt(int index)
         {
             SwapRemove(index);
         }
-        private void SwapRemove(int index)
+        private void SwapRemove(int removedindex)
         {
-            _source[index] = _source[_source.Count - 1];
+            if ((uint)removedindex >= (uint)_source.Count)
+                ThrowHelper.ArgumentOutOfRangeException();
+
+            if (removedindex != _source.Count - 1)
+            {
+                var swappedItemId = _source.Count - 1;
+
+                _source[removedindex] = _source[swappedItemId];
+                _ids[swappedItemId].index = removedindex;
+
+                (_ids[removedindex], _ids[swappedItemId]) = (_ids[swappedItemId], _ids[removedindex]);
+            }
+
             _source.RemoveAt(_source.Count - 1);
+            _ids.RemoveAt(_ids.Count - 1);
         }
 
         public void RemoveWhere(Func<TSource, bool> predicate)
@@ -85,7 +95,7 @@ namespace NL4.DataStructure
         public void Clear()
         {
             _source.Clear();
-            _reserveIndices.Clear();
+            _ids.Clear();
         }
 
         public bool Contains(TSource item)
@@ -101,6 +111,17 @@ namespace NL4.DataStructure
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
         {
             return _source.GetEnumerator();
+        }
+
+
+        public class ID
+        {
+            internal ID(int index)
+            {
+                this.index = index;
+            }
+
+            public int index { get; internal set; }
         }
     }
 
