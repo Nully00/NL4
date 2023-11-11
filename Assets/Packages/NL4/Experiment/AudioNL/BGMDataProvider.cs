@@ -54,8 +54,10 @@ namespace AudioNL
         {
             if (_loadStrategy == AudioLoadStrategy.LoadForEachPlay)
             {
-                _intro.UnloadAudioData();
-                _loop.UnloadAudioData();
+                if(_intro != null)
+                    _intro.UnloadAudioData();
+                if(_loop != null)
+                    _loop.UnloadAudioData();
                 _intro = null;
                 _loop = null;
                 _ = PausableTask.WaitTaskThenInvoke(UniTask.Yield().ToUniTask(), () =>
