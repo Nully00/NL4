@@ -13,10 +13,10 @@ namespace AudioNL
         private AudioClip _loop = null;
         public BGMDataProvider(AudioClip intro, AudioClip loop, AudioLoadStrategy audioLoadStrategy)
         {
-            if (intro == null || loop == null)
-            {
-                throw new ArgumentNullException("Intro and/or loop clips cannot be null.");
-            }
+            //if (intro == null || loop == null)
+            //{
+            //    throw new ArgumentNullException("Intro and/or loop clips cannot be null.");
+            //}
             this._intro = intro;
             this._loop = loop;
             this._loadStrategy = audioLoadStrategy;
@@ -24,10 +24,10 @@ namespace AudioNL
 
         public BGMDataProvider(Func<AudioClip> getIntro, Func<AudioClip> getLoop, AudioLoadStrategy audioLoadStrategy)
         {
-            if (getIntro == null || getLoop == null)
-            {
-                throw new ArgumentNullException("Intro and/or loop clip providers cannot be null.");
-            }
+            //if (getIntro == null || getLoop == null)
+            //{
+            //    throw new ArgumentNullException("Intro and/or loop clip providers cannot be null.");
+            //}
             this._getIntro = getIntro;
             this._getLoop = getLoop;
             this._loadStrategy = audioLoadStrategy;
