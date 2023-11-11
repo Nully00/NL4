@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c88c5508a3dfb1244b6819bf0b7688ec, type: 3}
+  m_Name: Result
+  m_EditorClassIdentifier: 
+  name1: Name1
+  name2: Name2
+  _introClipPath: 
+  _loopClipPath: result
+  overlapTime: 16
+  _loadStrategy: 2
