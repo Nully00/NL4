@@ -37,7 +37,7 @@ namespace AudioNL
         {
             if (_intro == null)
             {
-                _intro = _getIntro();
+                _intro = _getIntro?.Invoke();
             }
             return _intro;
         }
@@ -45,7 +45,7 @@ namespace AudioNL
         {
             if (_loop == null)
             {
-                _loop = _getLoop();
+                _loop = _getLoop?.Invoke();
             }
             return _loop;
         }
